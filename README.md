@@ -4,13 +4,13 @@ A comprehensive sales automation platform built with Next.js, featuring AI-power
 
 ## Features
 
-- **Landing Page**: Clean, modern design with pricing tiers (Basic & Pro)
-- **Dashboard**: Real-time analytics and performance metrics
-- **Lead Management**: Track and manage your sales pipeline
-- **AI Conversations**: Chat with your AI sales assistant
-- **Agent Configuration**: Customize your AI's personality and behavior
-- **Analytics**: Track conversion rates and AI activity
-- **Stripe Integration**: Subscription billing with Basic ($49/mo) and Pro ($149/mo) plans
+- **Landing Page**: Premium design with conversion-optimized pricing cards
+- **Floating Web Widget**: One-line script to embed a chat bubble on any website
+- **Dashboard**: Real-time sales analytics and message tracking
+- **Flexible Product Catalog**: Manage products with custom fields (Color, Size, SKU)
+- **Order Management**: Track orders and manage stock automatically from chat
+- **Stripe Integration**: SaaS billing with Basic (Free) and Pro ($99/mo) plans
+- **Agent Personality**: Fully customizable system prompts and behavioral rules
 
 ## Tech Stack
 
@@ -46,9 +46,9 @@ A comprehensive sales automation platform built with Next.js, featuring AI-power
 
 3. **Set up environment variables**
    
-   Copy `.env.example` to `.env.local` and fill in your values:
+   Create a `.env` file in the root directory:
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 
    Required environment variables:
@@ -88,20 +88,25 @@ src/
 │   ├── (dashboard)/          # Dashboard pages
 │   │   └── dashboard/
 │   │       ├── page.tsx      # Dashboard home
-│   │       ├── leads/        # Leads management
-│   │       ├── conversations/# AI chat interface
-│   │       ├── agent/        # AI configuration
+│   │       ├── agent/        # AI agent configuration
 │   │       ├── analytics/    # Analytics dashboard
+│   │       ├── chat/         # AI chat interface
+│   │       ├── conversations/# Prospect conversations
+│   │       ├── orders/       # Order management
+│   │       ├── products/     # Product catalog
 │   │       └── settings/     # Account settings
 │   └── api/
 │       ├── webhooks/         # Clerk & Stripe webhooks
-│       ├── ai/               # AI endpoints
-│       ├── leads/            # Lead CRUD
-│       └── billing/          # Billing portal
+│       ├── agent/            # AI agent endpoints
+│       ├── chat/             # Chat endpoints
+│       ├── billing/          # Billing portal
+│       ├── orders/           # Order CRUD
+│       ├── products/         # Product CRUD
+│       └── settings/         # User settings
 ├── components/
 │   └── ui/                   # UI components
 └── lib/
-    ├── db.ts                 # Prisma client
+    ├── db.ts                 # Prisma client singleton
     ├── openai.ts             # OpenAI utilities
     ├── stripe.ts             # Stripe utilities
     └── utils.ts              # Helper functions
@@ -109,18 +114,16 @@ src/
 
 ## Pricing Tiers
 
-### Basic Plan ($49/month)
-- 1,000 leads
-- 5,000 AI messages/month
-- Lead qualification
-- Email support
+### Basic Plan (Free)
+- 50 AI messages per month
+- Floating Web Widget embed
+- Flexible product attributes
 
-### Pro Plan ($149/month)
-- Unlimited leads
-- Unlimited AI messages
-- Priority support
-- Custom integrations
-- API access
+### Pro Plan ($99/month)
+- 2,000 AI messages per month
+- Everything in Basic
+- Priority email support
+- Advanced Sales Intelligence
 
 ## Configuration
 
@@ -151,12 +154,23 @@ src/
 
 ## Database Schema
 
-The application uses the following main models:
-- **User**: User account with subscription info
-- **Lead**: Sales leads with status tracking
-- **Conversation**: Chat conversations
-- **Message**: Individual chat messages
-- **AIAgent**: AI agent configuration
+The application uses PostgreSQL with the following main models:
+
+- **User**: User account with subscription info and plan details
+- **Prospect**: Sales prospects/deals with status tracking (Pending, Converted, Failed)
+- **VoiceLog**: Voice call transcripts and outcomes
+- **ChatLog**: Text conversation messages with role tracking (User, AI, System)
+- **AIAgent**: AI agent configuration including name, system prompt, and temperature
+- **Product**: Product catalog with pricing, inventory, and custom attributes
+- **Order**: Sales orders linked to prospects with status tracking
+- **OrderItem**: Individual items within orders
+
+Key Features:
+- Multi-role AI conversations (USER, AI, SYSTEM)
+- Deal status tracking (PENDING, CONVERTED, FAILED)
+- Subscription management (TRIAL, ACTIVE, PAST_DUE, CANCELED)
+- Order lifecycle (PENDING, CONFIRMED, COMPLETED, CANCELED)
+- Cascading deletes for data integrity
 
 See `prisma/schema.prisma` for complete schema.
 
