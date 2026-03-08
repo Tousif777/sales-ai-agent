@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  clerkUserId        String             @unique
+  email              String             @unique
+  stripeCustomerId   String?            @unique
+  subscriptionId     String?
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  plan               Plan               @default(BASIC)
+  messageCount       Int                @default(0)
+  messageResetDate   DateTime           @default(now())
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  prospects Prospect[]
+  aiAgent   AIAgent?
+  products  Product[]
+  orders    Order[]
+}
+
+model Prospect {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String     @default("Anonymous")
+  contact   String? // Email or phone number
+  status    DealStatus @default(PENDING)
+  notes     String?    @db.Text
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voiceLogs VoiceLog[]
+  chatLogs  ChatLog[]
+  orders    Order[]
+
+  @@index([userId, status])
+}
+
+model VoiceLog {
+  id         String   @id @default(cuid())
+  prospectId String
+  duration   Int? // duration in seconds
+  transcript String?  @db.Text
+  outcome    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+}
+
+model ChatLog {
+  id         String   @id @default(cuid())
+  prospectId String
+  role       ChatRole
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+}
+
+model AIAgent {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  name         String   @default("Agent")
+  systemPrompt String   @db.Text
+  temperature  Float    @default(0.7)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  description String?     @db.Text
+  price       Float
+  currency    String      @default("USD")
+  sku         String?
+  stock       Int         @default(0)
+  inStock     Boolean     @default(true)
+  attributes  Json?       @default("{}")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  @@index([userId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  prospectId  String
+  status      OrderStatus @default(PENDING)
+  total       Float       @default(0)
+  notes       String?     @db.Text
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prospect    Prospect    @relation(fields: [prospectId], references: [id])
+  items       OrderItem[]
+
+  @@index([userId, status])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int     @default(1)
+  price     Float
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+enum Plan {
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum DealStatus {
+  PENDING
+  CONVERTED
+  FAILED
+}
+
+enum ChatRole {
+  USER
+  AI
+  SYSTEM
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELED
+}
+
