@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { MessageSquare, ChevronRight, Trash2 } from "lucide-react"
+import { DeleteConfirmModal } from "@/components/delete-modal"
 
 type Prospect = {
   id: string
@@ -19,6 +20,7 @@ type Prospect = {
 export default function ChatLogsPage() {
   const [prospects, setProspects] = useState<Prospect[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: "" })
 
   const fetchChats = async () => {
     const res = await fetch("/api/chat")
@@ -31,11 +33,10 @@ export default function ChatLogsPage() {
 
   useEffect(() => { fetchChats() }, [])
 
-  const deleteChat = async (prospectId: string, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!confirm("Delete this conversation?")) return
-    await fetch(`/api/chat/${prospectId}`, { method: "DELETE" })
+  const deleteChat = async () => {
+    if (!deleteModal.id) return
+    await fetch(`/api/chat/${deleteModal.id}`, { method: "DELETE" })
+    setDeleteModal({ isOpen: false, id: "" })
     fetchChats()
   }
 
@@ -105,7 +106,11 @@ export default function ChatLogsPage() {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 text-gray-300 hover:text-red-600 shrink-0"
-                  onClick={(e) => deleteChat(prospect.id, e)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setDeleteModal({ isOpen: true, id: prospect.id })
+                  }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
@@ -114,6 +119,13 @@ export default function ChatLogsPage() {
           })}
         </div>
       )}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: "" })}
+        onConfirm={deleteChat}
+        title="Delete Conversation?"
+        description="This will permanently delete the entire chat history for this prospect. This action cannot be undone."
+      />
     </div>
   )
 }

@@ -2,6 +2,40 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
+// GET — Fetch a single order with details
+export async function GET(
+  _req: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  const { userId: clerkId } = await auth()
+  if (!clerkId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const user = await db.user.findUnique({ where: { clerkUserId: clerkId.trim()} })
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+  const { id } = await props.params
+
+  const order = await db.order.findUnique({
+    where: { id, userId: user.id },
+    include: {
+      prospect: true,
+      items: {
+        include: {
+          product: {
+            select: { name: true, sku: true, attributes: true }
+          }
+        }
+      }
+    }
+  })
+
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 })
+  }
+
+  return NextResponse.json(order)
+}
+
 // PUT — Update order status (with stock management)
 export async function PUT(
   req: Request,

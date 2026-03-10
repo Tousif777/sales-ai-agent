@@ -20,19 +20,22 @@ Guidelines:
 - Never make false promises or claims.`
 
 export async function generateChatResponse(
-  messages: { role: "user" | "assistant" | "system"; content: string }[],
+  messages: { role: "user" | "assistant" | "system" | "tool"; content: string; tool_call_id?: string; name?: string }[],
   systemPrompt?: string,
-  temperature: number = 0.7
+  temperature: number = 0.7,
+  tools?: any[]
 ) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt || DEFAULT_SYSTEM_PROMPT },
-      ...messages,
+      ...messages as any,
     ],
     temperature,
+    tools: tools && tools.length > 0 ? tools : undefined,
+    tool_choice: tools && tools.length > 0 ? "auto" : undefined,
     max_tokens: 1000,
   })
 
-  return response.choices[0]?.message?.content || ""
+  return response.choices[0]?.message
 }

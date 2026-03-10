@@ -23,6 +23,7 @@ export async function PUT(
       ...(body.description !== undefined && { description: body.description }),
       ...(body.price !== undefined && { price: parseFloat(body.price) }),
       ...(body.sku !== undefined && { sku: body.sku }),
+      ...(body.stock !== undefined && { stock: parseInt(body.stock) }),
       ...(body.inStock !== undefined && { inStock: body.inStock }),
       ...(body.currency !== undefined && { currency: body.currency }),
       ...(body.attributes !== undefined && { attributes: body.attributes }),
